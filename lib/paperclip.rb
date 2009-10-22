@@ -218,7 +218,12 @@ module Paperclip
       write_inheritable_attribute(:attachment_definitions, {}) if attachment_definitions.nil?
       attachment_definitions[name] = {:validations => []}.merge(options)
 
-      after_save :save_attached_files
+      after_save :save_attached_files, :if => lambda { |record|
+        record.class.attachment_definitions.any? do |name, definition|
+          record.attachment_for(name).dirty?
+        end
+      }
+      
       before_destroy :destroy_attached_files
 
       define_callbacks :before_post_process, :after_post_process
